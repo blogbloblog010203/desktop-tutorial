@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Time Is It? Kartları</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&family=Share+Tech+Mono&display=swap">
+<style>
+/* Layout: one big flashcard centered, category chips above, controls below — built for a smartboard */
+:root{
+  --bg:#eef4f7; --paper:#ffffff; --ink:#17323f; --muted:#5d7683; --line:#cfdde4;
+  --face:#fffdf6; --lcd:#132a20; --lcd-on:#7dffb0;
+  --c-oclock:#2b7de9; --c-half:#e8572a; --c-past:#17a36b; --c-to:#9b4fd8; --c-mpast:#0e8f9c; --c-mto:#d23f8a;
+  --display:"Fredoka","Nunito",system-ui,sans-serif;
+  --body:"Nunito",system-ui,sans-serif;
+  --mono:"Share Tech Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1b21; --paper:#18282f; --ink:#e7f1f5; --muted:#93a9b3; --line:#2c414b;
+  --face:#f4f1e6; --lcd:#08140f; --lcd-on:#6dffa6;
+  --c-oclock:#5a9cf2; --c-half:#f27a52; --c-past:#36c48a; --c-to:#b57ae6; --c-mpast:#2bb6c4; --c-mto:#ea6aaa; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1b21; --paper:#18282f; --ink:#e7f1f5; --muted:#93a9b3; --line:#2c414b;
+  --face:#f4f1e6; --lcd:#08140f; --lcd-on:#6dffa6;
+  --c-oclock:#5a9cf2; --c-half:#f27a52; --c-past:#36c48a; --c-to:#b57ae6; --c-mpast:#2bb6c4; --c-mto:#ea6aaa; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 32px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,4vw,40px);margin:0;text-wrap:balance}
+h1 span{color:var(--muted);font-weight:500;font-size:.6em;display:block}
+.count{font-family:var(--mono);font-size:18px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:700 15px var(--body);border:2px solid var(--line);background:var(--paper);color:var(--ink);
+  padding:8px 14px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--k,var(--ink));border-color:var(--k,var(--ink));color:#fff}
+.chip:focus-visible,.btn:focus-visible,.card:focus-visible{outline:3px solid var(--c-oclock);outline-offset:3px}
+.card{background:var(--paper);border:2px solid var(--line);border-radius:22px;overflow:hidden;cursor:pointer;
+  display:flex;flex-direction:column;user-select:none;touch-action:pan-y}
+.band{background:var(--k);color:#fff;font:600 18px var(--display);letter-spacing:.06em;text-transform:uppercase;
+  height:14px}
+.band b{font-weight:700;letter-spacing:0;text-transform:none}
+.clocks{display:grid;grid-template-columns:1fr 1fr;gap:clamp(16px,4vw,48px);align-items:center;justify-items:center;padding:clamp(18px,4vw,40px)}
+.analog{width:min(100%,320px);aspect-ratio:1;max-width:100%}
+.digital{background:var(--lcd);border-radius:18px;padding:clamp(14px,3vw,28px) clamp(18px,4vw,36px);
+  box-shadow:inset 0 0 0 6px #2a3a33, 0 6px 0 #0006;max-width:100%}
+.digital span{font-family:var(--mono);color:var(--lcd-on);font-size:clamp(54px,11vw,120px);line-height:1;
+  text-shadow:0 0 14px color-mix(in srgb,var(--lcd-on) 55%,transparent);font-variant-numeric:tabular-nums;display:block}
+.words{border-top:2px dashed var(--line);padding:18px 24px 24px;text-align:center;display:flex;flex-direction:column;gap:6px;min-height:130px;justify-content:center}
+.en{font:700 clamp(26px,4.4vw,46px) var(--display);margin:0;text-wrap:balance}
+.en mark{background:none;color:var(--k)}
+.tr{font:700 clamp(19px,3vw,30px) var(--body);color:var(--muted);margin:0;text-wrap:balance}
+.tr::before{content:"TR  ";font:600 .6em var(--mono);color:var(--muted);letter-spacing:.1em;vertical-align:middle}
+.hide .en,.hide .tr{visibility:hidden}
+.hint{display:none;font:700 18px var(--body);color:var(--muted)}
+.hide .hint{display:block;position:absolute;top:26px;left:0;right:0}
+.words{position:relative;align-items:center}
+.controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.btn{font:700 17px var(--body);background:var(--paper);color:var(--ink);border:2px solid var(--line);
+  border-radius:14px;padding:12px 20px;cursor:pointer;min-width:52px}
+.btn.big{background:var(--ink);color:var(--bg);border-color:var(--ink);font-size:20px;padding:12px 28px}
+.btn[aria-pressed="true"]{border-color:var(--c-oclock);color:var(--c-oclock)}
+.say{font-size:30px;line-height:1;width:64px;height:64px;border-radius:50%;border:3px solid var(--k);
+  background:var(--paper);color:var(--k);cursor:pointer;display:grid;place-items:center;margin-top:6px}
+.say:hover{background:color-mix(in srgb,var(--k) 14%,var(--paper))}
+.say.on{background:var(--k);color:#fff}
+.say:focus-visible{outline:3px solid var(--c-oclock);outline-offset:3px}
+.note{text-align:center;color:var(--muted);font-size:14px;margin:0}
+@media (max-width:560px){.clocks{grid-template-columns:1fr}.analog{width:min(100%,260px)}}
+@media (prefers-reduced-motion:no-preference){.card.anim{animation:pop .28s ease}
+  @keyframes pop{from{transform:scale(.97);opacity:.6}to{transform:none;opacity:1}}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>What time is it?<span>Flash Cards</span></h1>
+    <div class="count" id="count">1 / 144</div>
+  </header>
+
+  <div class="chips" id="chips" role="group" aria-label="Kart türü"></div>
+
+  <div class="card" id="card" tabindex="0" aria-live="polite">
+    <div class="band" id="band" aria-hidden="true"></div>
+    <div class="clocks">
+      <svg class="analog" id="analog" viewBox="0 0 200 200" role="img" aria-label="Analog saat"></svg>
+      <div class="digital"><span id="dig">3:00</span></div>
+    </div>
+    <div class="words">
+      <p class="en" id="en"></p>
+      <div class="hint">Cevabı görmek için karta dokun 👆</div>
+      <button class="say" id="say" aria-label="Cevabı İngilizce dinle" title="Cevabı dinle">🔊</button>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="prev" aria-label="Önceki kart">◀ Önceki</button>
+    <button class="btn big" id="next" aria-label="Sonraki kart">Sonraki ▶</button>
+    <button class="btn" id="shuffle">🔀 Karıştır</button>
+    <button class="btn" id="quiz" aria-pressed="false">🙈 Yazıları gizle</button>
+    <button class="btn" id="tick" aria-pressed="true">⏱️ Tik tak: açık</button>
+  </div>
+  <p class="note">Klavye: ← → kartlar arası, Boşluk yazıyı göster/gizle, S sesli oku · Tik tak sesi ilk dokunuşta başlar.</p>
+</div>
+
+<script>
+const EN=["twelve","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve"];
+const MIN={5:"five",10:"ten",15:"quarter",20:"twenty",25:"twenty-five"};
+const CATS=[
+ {id:"oclock",ms:[0], name:"o'clock",tr:"tam saat",k:"--c-oclock"},
+ {id:"mpast",ms:[5,10,20,25],name:"… past",tr:"geçe",k:"--c-mpast"},
+ {id:"past",ms:[15],name:"quarter past",tr:"çeyrek geçe",k:"--c-past"},
+ {id:"half",ms:[30],name:"half past",tr:"buçuk",k:"--c-half"},
+ {id:"to",ms:[45],name:"quarter to",tr:"çeyrek kala",k:"--c-to"},
+ {id:"mto",ms:[35,40,50,55],name:"… to",tr:"kala",k:"--c-mto"}];
+function make(h,m,c){
+  const nx=h%12+1; let en;
+  if(m===0)en=`It's ${EN[h]} <mark>o'clock</mark>.`;
+  else if(m===30)en=`It's <mark>half past</mark> ${EN[h]}.`;
+  else if(m<30)en=`It's <mark>${MIN[m]} past</mark> ${EN[h]}.`;
+  else en=`It's <mark>${MIN[60-m]} to</mark> ${EN[nx]}.`;
+  return {h,m,c,en,dig:`${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}`};
+}
+const ALL=[];for(let h=1;h<=12;h++)for(let m=0;m<60;m+=5)ALL.push(make(h,m,CATS.find(c=>c.ms.includes(m))));
+let filter="all",deck=[],i=0,hidden=false;
+const $=id=>document.getElementById(id);
+
+function build(){deck=ALL.filter(x=>filter==="all"||x.c.id===filter);i=0;show()}
+function pt(a,r){const t=(a-90)*Math.PI/180;return[100+r*Math.cos(t),100+r*Math.sin(t)]}
+function clock(h,m,col){
+  let s=`<circle cx="100" cy="100" r="96" fill="var(--ink)"/><circle cx="100" cy="100" r="90" fill="var(--face)"/>`;
+  // shaded wedge: past → 12 to minute hand; to → minute hand to 12
+  if(m>0){const a0=m>30?m*6:0,a1=m>30?360:m*6,[x0,y0]=pt(a0,82),[x1,y1]=pt(a1,82),big=(a1-a0)>180?1:0;
+    s+=`<path d="M100 100 L${x0} ${y0} A82 82 0 ${big} 1 ${x1} ${y1} Z" fill="${col}" opacity=".22"/>`}
+  for(let t=0;t<60;t++){const a=t*6,[x0,y0]=pt(a,t%5?84:78),[x1,y1]=pt(a,88);
+    s+=`<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="#17323f" stroke-width="${t%5?1:3}" stroke-linecap="round"/>`}
+  for(let n=1;n<=12;n++){const[x,y]=pt(n*30,66);
+    s+=`<text x="${x}" y="${y}" text-anchor="middle" dominant-baseline="central" font-family="Fredoka,Nunito,sans-serif" font-weight="700" font-size="17" fill="#17323f">${n}</text>`}
+  const ha=(h%12)*30+m*.5,ma=m*6,[hx,hy]=pt(ha,44),[mx,my]=pt(ma,72);
+  s+=`<line x1="100" y1="100" x2="${hx}" y2="${hy}" stroke="#17323f" stroke-width="8" stroke-linecap="round"/>`;
+  s+=`<line x1="100" y1="100" x2="${mx}" y2="${my}" stroke="${col}" stroke-width="5" stroke-linecap="round"/>`;
+  s+=`<circle cx="100" cy="100" r="6" fill="${col}"/><circle cx="100" cy="100" r="2.5" fill="#fff"/>`;
+  return s;
+}
+function show(){
+  const x=deck[i],card=$("card"),col=`var(${x.c.k})`;
+  card.style.setProperty("--k",col);
+  $("analog").innerHTML=clock(x.h,x.m,col);
+  $("analog").setAttribute("aria-label","Analog saat "+x.dig);
+  $("dig").textContent=x.dig;$("en").innerHTML=x.en;
+  $("count").textContent=`${i+1} / ${deck.length}`;
+  card.classList.toggle("hide",hidden);
+  card.classList.remove("anim");void card.offsetWidth;card.classList.add("anim");
+}
+const go=d=>{if("speechSynthesis" in window)speechSynthesis.cancel();i=(i+d+deck.length)%deck.length;show()};
+// chips
+[{id:"all",name:"All",k:null},...CATS.map(c=>({id:c.id,name:c.name,k:c.k}))].forEach(c=>{
+  const b=document.createElement("button");b.className="chip";b.textContent=c.name;
+  if(c.k)b.style.setProperty("--k",`var(${c.k})`);
+  b.setAttribute("aria-pressed",c.id==="all");
+  b.onclick=()=>{filter=c.id;document.querySelectorAll(".chip").forEach(z=>z.setAttribute("aria-pressed",z===b));build()};
+  $("chips").appendChild(b);
+});
+$("prev").onclick=()=>go(-1);$("next").onclick=()=>go(1);
+$("shuffle").onclick=()=>{for(let j=deck.length-1;j>0;j--){const r=Math.floor(Math.random()*(j+1));[deck[j],deck[r]]=[deck[r],deck[j]]}i=0;show()};
+$("quiz").onclick=()=>{hidden=!hidden;$("quiz").setAttribute("aria-pressed",hidden);$("quiz").textContent=hidden?"👀 Yazıları göster":"🙈 Yazıları gizle";show()};
+$("card").onclick=()=>{if(hidden)$("card").classList.toggle("hide")};
+document.addEventListener("keydown",e=>{if(e.key==="ArrowRight")go(1);else if(e.key==="ArrowLeft")go(-1);
+  else if(e.key===" "&&document.activeElement.tagName!=="BUTTON"){e.preventDefault();$("card").classList.toggle("hide")}});
+let sx=null;$("card").addEventListener("pointerdown",e=>sx=e.clientX);
+$("card").addEventListener("pointerup",e=>{if(sx!==null&&Math.abs(e.clientX-sx)>60){go(e.clientX<sx?1:-1);sx=null;e.stopPropagation()}sx=null},true);
+/* ---------- sesli okuma (İngilizce) ---------- */
+let voice=null;
+function pickVoice(){
+  if(!("speechSynthesis" in window))return;
+  const v=speechSynthesis.getVoices();
+  voice=v.find(x=>/en-GB/i.test(x.lang)&&/female|Kate|Serena|Libby|Sonia|Google UK/i.test(x.name))
+     ||v.find(x=>/en-GB/i.test(x.lang))||v.find(x=>/en-US/i.test(x.lang))||v.find(x=>/^en/i.test(x.lang))||null;
+}
+if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function speak(){
+  const say=$("say");
+  if(!("speechSynthesis" in window)){say.title="Bu tarayıcı sesli okumayı desteklemiyor";return}
+  const text=$("en").textContent;
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  if(voice)u.voice=voice;u.lang=voice?voice.lang:"en-GB";u.rate=.85;
+  u.onstart=()=>{say.classList.add("on");duck(true)};
+  u.onend=u.onerror=()=>{say.classList.remove("on");duck(false)};
+  speechSynthesis.speak(u);
+}
+$("say").addEventListener("click",e=>{e.stopPropagation();startTick();speak()});
+document.addEventListener("keydown",e=>{if(e.key==="s"||e.key==="S")speak()});
+
+/* ---------- arka planda tik tak ---------- */
+let ac=null,master=null,tickTimer=null,tickOn=true,beat=0,nextT=0;
+function click(t,high){
+  const len=.05,buf=ac.createBuffer(1,ac.sampleRate*len,ac.sampleRate),d=buf.getChannelData(0);
+  for(let n=0;n<d.length;n++)d[n]=(Math.random()*2-1)*Math.pow(1-n/d.length,6);
+  const src=ac.createBufferSource();src.buffer=buf;
+  const bp=ac.createBiquadFilter();bp.type="bandpass";bp.frequency.value=high?3200:2100;bp.Q.value=4;
+  const g=ac.createGain();g.gain.value=high?.9:.75;
+  src.connect(bp).connect(g).connect(master);src.start(t);
+}
+function scheduler(){
+  while(nextT<ac.currentTime+.25){click(nextT,beat%2===0);beat++;nextT+=.5}
+}
+function startTick(){
+  if(!tickOn)return;
+  try{
+    if(!ac){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+      ac=new AC();master=ac.createGain();master.gain.value=.35;master.connect(ac.destination)}
+    if(ac.state==="suspended")ac.resume();
+    if(!tickTimer){nextT=ac.currentTime+.05;tickTimer=setInterval(scheduler,60)}
+  }catch(err){}
+}
+function stopTick(){clearInterval(tickTimer);tickTimer=null}
+function duck(on){if(master)master.gain.setTargetAtTime(on?.08:.35,ac.currentTime,.05)}
+$("tick").addEventListener("click",e=>{
+  e.stopPropagation();tickOn=!tickOn;
+  $("tick").setAttribute("aria-pressed",tickOn);
+  $("tick").textContent=tickOn?"⏱️ Tik tak: açık":"⏱️ Tik tak: kapalı";
+  tickOn?startTick():stopTick();
+});
+["pointerdown","keydown"].forEach(ev=>document.addEventListener(ev,startTick));
+document.addEventListener("visibilitychange",()=>{if(document.hidden)stopTick();else startTick()});
+
+build();
+</script>
+</body>
+</html>
